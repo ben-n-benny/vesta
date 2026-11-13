@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+  }
+
+  html,
+  body {
+    background-color: #0a0c10;
+    color: #f5f5f7;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 180ms ease, color 180ms ease;
+  }
+
+  html.light,
+  html.light body {
+    background-color: #f3f5f9;
+    color: #0f172a;
+  }
+
+  .font-mono-num {
+    font-family: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* iOS-inspired grouped surfaces with subtle spacecraft restraint */
+.card-surface {
+  background-color: #141821;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+}
+
+.card-surface-inner {
+  background-color: #1b202c;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+}
+
+html.light .card-surface {
+  background-color: #ffffff;
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.04);
+}
+
+html.light .card-surface-inner {
+  background-color: #f4f6fa;
+  border-color: rgba(15, 23, 42, 0.07);
+}
+
+/* Light mode semantic surface & typography adaptation */
+html.light .bg-\[\#0A0C10\] {
+  background-color: #f3f5f9 !important;
+}
+html.light .bg-\[\#0A0C10\]\/85 {
+  background-color: rgba(243, 245, 249, 0.88) !important;
+}
+html.light .bg-\[\#141821\] {
+  background-color: #ffffff !important;
+}
+html.light .bg-\[\#141821\]\/95 {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+}
+html.light .bg-\[\#1B202C\] {
+  background-color: #eef2f7 !important;
+}
+html.light .bg-\[\#121620\],
+html.light .bg-\[\#11151E\],
+html.light .bg-\[\#0F131B\] {
+  background-color: #ffffff !important;
+}
+html.light .bg-\[\#0D1017\]\/95 {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+}
+html.light .bg-\[\#252C3B\],
+html.light .bg-\[\#2A3244\],
+html.light .bg-\[\#242B3A\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.06);
+}
+html.light .hover\:bg-\[\#1C222E\]:hover,
+html.light .hover\:bg-\[\#212735\]:hover,
+html.light .hover\:bg-\[\#252C3B\]:hover {
+  background-color: #e4eaf2 !important;
+}
+
+/* Light mode translucent pills, borders, and dividers */
+html.light .bg-white\/\[0\.06\],
+html.light .bg-white\/\[0\.07\],
+html.light .bg-white\/\[0\.08\] {
+  background-color: rgba(15, 23, 42, 0.055) !important;
+}
+html.light .hover\:bg-white\/\[0\.03\]:hover,
+html.light .hover\:bg-white\/\[0\.06\]:hover,
+html.light .hover\:bg-white\/\[0\.08\]:hover,
+html.light .hover\:bg-white\/\[0\.1\]:hover,
+html.light .hover\:bg-white\/\[0\.12\]:hover,
+html.light .hover\:bg-white\/\[0\.14\]:hover {
+  background-color: rgba(15, 23, 42, 0.09) !important;
+}
+html.light .border-white\/\[0\.05\],
+html.light .border-white\/\[0\.06\],
+html.light .border-white\/\[0\.07\],
+html.light .border-white\/\[0\.08\],
+html.light .border-white\/10,
+html.light .border-white\/12,
+html.light .border-white\/15 {
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+html.light .hover\:border-white\/15:hover {
+  border-color: rgba(15, 23, 42, 0.18) !important;
+}
+html.light .divide-white\/\[0\.06\] > :not(:last-child),
+html.light .divide-white\/\[0\.05\] > :not(:last-child) {
+  border-color: rgba(15, 23, 42, 0.07) !important;
+}
+
+/* Light mode text hierarchy */
+html.light .text-white {
+  color: #0f172a !important;
+}
+html.light .text-slate-100 {
+  color: #0f172a !important;
+}
+html.light .text-slate-200 {
+  color: #1e293b !important;
+}
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+html.light .text-slate-400 {
+  color: #475569 !important;
+}
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+html.light .hover\:text-white:hover,
+html.light .hover\:text-slate-200:hover {
+  color: #0f172a !important;
+}
+
+/* High-contrast clinical status colors for light mode */
+html.light .text-rose-200,
+html.light .text-rose-300 {
+  color: #be123c !important;
+}
+html.light .text-amber-300 {
+  color: #b45309 !important;
+}
+html.light .text-emerald-300,
+html.light .text-emerald-400 {
+  color: #047857 !important;
+}
+html.light .text-sky-300,
+html.light .text-sky-400 {
+  color: #0284c7 !important;
+}
+html.light .text-indigo-300 {
+  color: #4338ca !important;
+}
+html.light .text-teal-300 {
+  color: #0f766e !important;
+}
+
+/* Light modal backdrop */
+html.light .bg-black\/75,
+html.light .bg-black\/70 {
+  background-color: rgba(15, 23, 42, 0.35) !important;
+}
+
+/* Subtle clean scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0c10;
+}
+::-webkit-scrollbar-thumb {
+  background: #262c3a;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #363e52;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #f3f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
