@@ -6,7 +6,54 @@ import {
   ChevronUp,
   Check,
   Users,
+  Info,
 } from 'lucide-react';
+
+function HrpRiskBadge({ risk, label, align = 'left' }) {
+  if (!risk) return null;
+  const alignClass = align === 'right' ? 'right-0' : 'left-0';
+  return (
+    <div className="group relative inline-block">
+      <button
+        type="button"
+        className="inline-flex items-center gap-1 rounded-full border border-indigo-400/25 bg-indigo-500/12 px-2.5 py-0.5 text-[11px] font-medium text-indigo-200 transition hover:border-indigo-400/45 hover:bg-indigo-500/20 focus:outline-none focus:ring-1 focus:ring-indigo-400/50 cursor-help"
+        aria-label={`${risk.title}: ${risk.detail}`}
+      >
+        <Info className="h-3 w-3 shrink-0 text-indigo-300" />
+        <span>{label}</span>
+      </button>
+
+      <div
+        role="tooltip"
+        className={`pointer-events-none absolute top-full ${alignClass} z-50 mt-2 w-72 sm:w-80 rounded-2xl border border-white/15 bg-[#0F131C]/95 p-3.5 text-left shadow-2xl backdrop-blur-xl opacity-0 translate-y-1 transition-all duration-150 group-hover:pointer-events-auto group-hover:opacity-100 group-hover:translate-y-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-focus-within:translate-y-0`}
+      >
+        <div className="flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-indigo-300">
+          <span>{risk.id} · {risk.category}</span>
+          <span className="text-slate-400">NASA HRP</span>
+        </div>
+        <div className="mt-1 text-xs font-semibold text-white">{risk.title}</div>
+        <p className="mt-1.5 text-[11px] leading-relaxed text-slate-300">{risk.detail}</p>
+        {risk.drivers && risk.drivers.length > 0 && (
+          <div className="mt-2.5 border-t border-white/10 pt-2">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-400">
+              Monitored Signals
+            </div>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {risk.drivers.map((d) => (
+                <span
+                  key={d}
+                  className="rounded-md bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-slate-200"
+                >
+                  {d}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 function ClearancePill({ label, status }) {
   const styles =
@@ -67,7 +114,7 @@ export default function ExplainableTriagePanel({
   return (
     <section
       aria-label="Health Summary & Actions"
-      className="card-surface overflow-hidden transition-all"
+      className="card-surface overflow-visible transition-all"
     >
       {/* Clean Summary Row */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
@@ -83,6 +130,12 @@ export default function ExplainableTriagePanel({
               <span className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${badgeTone}`}>
                 {isNominal ? 'Normal' : primary.severity === 'CRITICAL' ? 'Urgent' : 'Attention'}
               </span>
+              {primary.hrpRisk && !isNominal && (
+                <HrpRiskBadge
+                  risk={primary.hrpRisk}
+                  label={`NASA HRP · ${primary.hrpRisk.shortLabel}`}
+                />
+              )}
               {crewCorrelation && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-sky-300">
                   <Users className="h-3 w-3" />
@@ -148,10 +201,24 @@ export default function ExplainableTriagePanel({
             <div className="space-y-3 lg:col-span-5">
               {insights.map((insight) => (
                 <div key={insight.id} className="card-surface-inner p-4 space-y-2.5">
-                  {insights.length > 1 && (
-                    <div className="text-xs font-semibold text-white">{insight.title}</div>
-                  )}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    {insights.length > 1 && (
+                      <div className="text-xs font-semibold text-white">{insight.title}</div>
+                    )}
+                    {insight.hrpRisk && (
+                      <HrpRiskBadge
+                        risk={insight.hrpRisk}
+                        label={`${insight.hrpRisk.id} · ${insight.hrpRisk.shortLabel}`}
+                      />
+                    )}
+                  </div>
                   <p className="text-xs leading-relaxed text-slate-300">{insight.differentialNote}</p>
+                  {insight.hrpRisk && (
+                    <p className="text-[11px] leading-relaxed text-slate-400">
+                      <span className="font-medium text-indigo-300">{insight.hrpRisk.title}:</span>{' '}
+                      {insight.hrpRisk.summary}
+                    </p>
+                  )}
                   <div className="grid grid-cols-3 gap-2">
                     {insight.signals.map((sig) => (
                       <div key={sig.label} className="rounded-xl bg-[#121620] px-2.5 py-2">

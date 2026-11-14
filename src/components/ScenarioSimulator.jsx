@@ -6,6 +6,7 @@ import {
   Radiation,
   Wind,
   Moon,
+  Eye,
   CheckCircle2,
   RotateCcw,
 } from 'lucide-react';
@@ -16,6 +17,7 @@ const SCENARIO_ICONS = {
   SPE: Radiation,
   CO2_SCRUBBER: Wind,
   CIRCADIAN_BONE: Moon,
+  SANS_FLUID_SHIFT: Eye,
 };
 
 const TUNABLE_CONTROLS = [

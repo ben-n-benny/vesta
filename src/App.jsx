@@ -7,6 +7,7 @@ import ScenarioSimulator from './components/ScenarioSimulator.jsx';
 import AstronautLogModal from './components/AstronautLogModal.jsx';
 import AddMetricModal from './components/AddMetricModal.jsx';
 import AdminManagementModal from './components/AdminManagementModal.jsx';
+import OnboardingModal from './components/OnboardingModal.jsx';
 import {
   CREW_ROSTER,
   DEFAULT_THRESHOLDS,
@@ -69,6 +70,15 @@ function buildScenarioTargetsForCrew(crew, scenarioId) {
       cognitive: { ...base.cognitive, sleepHours: 5.2, deepSleepHours: 0.8, remSleepHours: 1.0, lightSleepHours: 3.4, circadianAlignmentPct: 58, pvtMeanMs: crew.baselines.pvtMeanMs + 50, moodScore: 5.5 },
     };
   }
+  if (scenarioId === 'SANS_FLUID_SHIFT') {
+    return {
+      ...base,
+      cardio: { ...base.cardio, restingHr: crew.baselines.restingHr + 4, hrvRmssd: Math.round(crew.baselines.hrvRmssd * 0.88), orthostaticIndex: 73, aredCompletionPct: 84 },
+      bone: { ...base.bone, skeletalLoadScore: 72 },
+      immuneRad: { ...base.immuneRad, cabinCo2Ppm: 2150, cabinVocPpb: 155, immuneSymptomScore: 0 },
+      cognitive: { ...base.cognitive, sleepHours: 6.0, circadianAlignmentPct: 79, pvtMeanMs: crew.baselines.pvtMeanMs + 30, moodScore: 5.4 },
+    };
+  }
   return base;
 }
 
@@ -118,6 +128,14 @@ export default function App() {
   const [isSelfCheckOpen, setIsSelfCheckOpen] = useState(false);
   const [isAddMetricOpen, setIsAddMetricOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return window.localStorage.getItem('vesta_onboarding_seen_v1') !== '1';
+    } catch {
+      return false;
+    }
+  });
   const [theme, setTheme] = useState(() => {
     try {
       return localStorage.getItem('vesta_theme') === 'light' ? 'light' : 'dark';
@@ -728,6 +746,7 @@ export default function App() {
       destination: 'MCC-HOUSTON/FLIGHT-SURGEON',
       status: 'QUEUED_BLACKOUT',
       payloadBytes: JSON.stringify(newLog).length + 256,
+      hrpRisks: (triage.activeHrpRisks || []).map((r) => r.id),
       summary: `${activeCrew.shortName} Check-In: ${form.symptoms.join(', ')} · ARED ${form.aredCompletionPct}%`,
     };
     const auditEntry = makeAuditEntry('CMO_CHECKIN', `Logged ${entryId} for ${activeCrew.shortName}`, activeCrew.name);
@@ -782,6 +801,15 @@ export default function App() {
     });
   };
 
+  const handleCloseOnboarding = () => {
+    setIsOnboardingOpen(false);
+    try {
+      window.localStorage.setItem('vesta_onboarding_seen_v1', '1');
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const handleResetMission = async () => {
     const fresh = await resetMissionState();
     setMissionState(fresh);
@@ -802,6 +830,7 @@ export default function App() {
         onOpenSelfCheck={() => setIsSelfCheckOpen(true)}
         onOpenAddMetric={() => setIsAddMetricOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
         onResetMission={handleResetMission}
       />
 
@@ -881,6 +910,17 @@ export default function App() {
         onSubmitLog={handleSubmitSelfCheck}
         onExportJson={() => exportDtnBundleJson(missionState, activeTriage)}
         onExportCsv={() => exportCmoLogsCsv(missionState.cmoLogs)}
+      />
+
+      <OnboardingModal
+        isOpen={isOnboardingOpen}
+        onClose={handleCloseOnboarding}
+        crewRoster={missionState.crewRoster || CREW_ROSTER}
+        activeCrewId={missionState.activeCrewId}
+        crewSummaries={crewSummaries}
+        activeScenario={missionState.activeScenario}
+        onSelectCrew={handleSelectCrew}
+        onSelectScenario={handleSelectScenario}
       />
     </div>
   );

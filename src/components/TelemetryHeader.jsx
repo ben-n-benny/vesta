@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, ClipboardCheck, RotateCcw, Settings2, Sun, Moon } from 'lucide-react';
+import { RotateCcw, Settings2, Sun, Moon, HelpCircle } from 'lucide-react';
 import { CREW_ROSTER } from '../data/missionSeed.js';
 
 function formatMet(totalSeconds) {
@@ -24,6 +24,7 @@ export default function TelemetryHeader({
   onOpenSelfCheck,
   onOpenAddMetric,
   onOpenAdmin,
+  onOpenOnboarding,
   onResetMission,
 }) {
   const roster = crewRoster && crewRoster.length ? crewRoster : CREW_ROSTER;
@@ -37,14 +38,6 @@ export default function TelemetryHeader({
           <div>
             <div className="flex items-center gap-2.5">
               <h1 className="text-lg font-semibold tracking-tight text-white">VESTA</h1>
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/[0.06] px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    backendOnline ? 'bg-emerald-400' : 'bg-amber-400'
-                  }`}
-                />
-                {backendOnline ? 'Local Server' : 'Offline'}
-              </span>
             </div>
             <p className="text-xs text-slate-400">
               {activeCrew.name} · Day {activeCrew.missionDay} ·{' '}
@@ -92,29 +85,11 @@ export default function TelemetryHeader({
 
           <button
             type="button"
-            onClick={onOpenAddMetric}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/10 bg-[#141821] px-3.5 text-xs font-medium text-slate-200 transition hover:bg-[#1C222E] cursor-pointer"
-          >
-            <Plus className="h-4 w-4 text-sky-400" />
-            <span>Add Metric</span>
-          </button>
-
-          <button
-            type="button"
             onClick={onOpenAdmin}
             className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full border border-white/10 bg-[#141821] px-3.5 text-xs font-medium text-slate-200 transition hover:bg-[#1C222E] cursor-pointer"
           >
             <Settings2 className="h-3.5 w-3.5 text-slate-300" />
             <span>Admin</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onOpenSelfCheck}
-            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-sky-500 px-4 text-xs font-semibold text-slate-950 transition hover:bg-sky-400 cursor-pointer"
-          >
-            <ClipboardCheck className="h-4 w-4" />
-            <span>Check-In</span>
           </button>
 
           <button
@@ -125,6 +100,16 @@ export default function TelemetryHeader({
             className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#141821] text-slate-300 transition hover:bg-[#1C222E] hover:text-white cursor-pointer"
           >
             {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-300" /> : <Moon className="h-4 w-4 text-slate-300" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenOnboarding}
+            title="Open Interactive Guide"
+            aria-label="Open Interactive Guide"
+            className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#141821] text-slate-300 transition hover:bg-[#1C222E] hover:text-white cursor-pointer"
+          >
+            <HelpCircle className="h-4 w-4 text-sky-300" />
           </button>
 
           <button

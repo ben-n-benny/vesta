@@ -1,4 +1,5 @@
 import { CREW_PROFILE, DEFAULT_THRESHOLDS } from '../data/missionSeed.js';
+import { HRP_NOMINAL_REFERENCE, HRP_RISKS } from '../data/hrpRisks.js';
 
 /**
  * Deterministic, Explainable Edge-AI Clinical Correlation Engine.
@@ -29,6 +30,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'HYPERCAPNIA_FATIGUE',
       severity: 'WARNING',
       confidence: 94,
+      hrpRisk: HRP_RISKS.EVA_ATMOSPHERE,
       title: 'Mild Hypercapnia Fatigue (Not Cardiac)',
       differentialNote:
         'Blood pressure is stable; HRV drop and slower reaction speed match rising cabin CO₂ rather than cardiac strain.',
@@ -80,6 +82,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'ELEVATED_CO2_ONLY',
       severity: isCriticalCo2 ? 'CRITICAL' : 'WARNING',
       confidence: 92,
+      hrpRisk: HRP_RISKS.EVA_ATMOSPHERE,
       title: `Elevated Cabin CO₂ (${Math.round(immuneRad.cabinCo2Ppm).toLocaleString()} ppm)`,
       differentialNote:
         `Cabin CO₂ exceeded the ${T.co2WarningPpm.toLocaleString()} ppm threshold. Boost scrubbing before cognitive fatigue develops.`,
@@ -124,6 +127,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'CARDIO_AUTONOMIC_STRAIN',
       severity: isHighHr ? 'CRITICAL' : 'WARNING',
       confidence: 90,
+      hrpRisk: HRP_RISKS.CARDIO_ADAPTATIONS,
       title: cardio.restingHr > T.hrWarningBpm ? 'Elevated Heart Rate & Autonomic Strain' : 'Low HRV Recovery Alert',
       differentialNote:
         'Autonomic stress detected without elevated cabin CO₂; likely dehydration, exertion, or acute stress.',
@@ -167,6 +171,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'COGNITIVE_PVT_SLOWING',
       severity: pvtSlowingMs > T.pvtSlowingWarningMs + 35 ? 'CRITICAL' : 'WARNING',
       confidence: 89,
+      hrpRisk: HRP_RISKS.INADEQUATE_SLEEP,
       title: `Slower Reaction Time (+${pvtSlowingMs.toFixed(0)} ms)`,
       differentialNote:
         'Psychomotor vigilance is slower than personal baseline; defer high-precision control until alert.',
@@ -210,6 +215,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'SPE_RADIATION_SPIKE',
       severity: 'CRITICAL',
       confidence: 98,
+      hrpRisk: HRP_RISKS.SPACE_RADIATION,
       title: 'Solar Particle Event — High Radiation',
       differentialNote:
         'Proton flux jumped sharply above transit baseline. Local shelter protocol active without waiting for Earth.',
@@ -253,6 +259,10 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'CIRCADIAN_BONE_DEFICIT',
       severity: 'WARNING',
       confidence: 91,
+      hrpRisk:
+        bone.skeletalLoadScore < 70 || cardio.aredCompletionPct < 70
+          ? HRP_RISKS.BONE_CHANGES
+          : HRP_RISKS.INADEQUATE_SLEEP,
       title: 'Circadian Shift & Low Exercise Load',
       differentialNote:
         'Cabin air is normal; lower HRV and slower reaction reflect sleep phase drift and missed resistive workouts.',
@@ -296,6 +306,7 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
       id: 'IMMUNE_SYMPTOM_WATCH',
       severity: 'WARNING',
       confidence: 86,
+      hrpRisk: HRP_RISKS.IMMUNE_RESPONSES,
       title: 'Mild Immune / Cabin Air Stress',
       differentialNote:
         'Recent self-reported symptoms or elevated VOCs warrant a quick immune strip and filter check.',
@@ -316,12 +327,81 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
     });
   }
 
+  // 4b. Spaceflight Associated Neuro-ocular Syndrome (SANS) / Cephalad Fluid Shift
+  if (
+    cardio.orthostaticIndex < 82 &&
+    (immuneRad.cabinCo2Ppm > 1800 || bone.skeletalLoadScore < 75 || cardio.orthostaticIndex < 76)
+  ) {
+    insights.push({
+      id: 'SANS_FLUID_SHIFT',
+      severity: cardio.orthostaticIndex < 74 ? 'CRITICAL' : 'WARNING',
+      confidence: 88,
+      hrpRisk: HRP_RISKS.SANS,
+      title: 'Cephalad Fluid Shift / SANS Watch',
+      differentialNote:
+        'Orthostatic index dropped alongside microgravity fluid redistribution and cabin CO₂ load; screen for early SANS.',
+      clinicalSummary: `Orthostatic index ${Math.round(cardio.orthostaticIndex)}/100 with cabin CO₂ at ${Math.round(immuneRad.cabinCo2Ppm)} ppm.`,
+      signals: [
+        { label: 'Fluid Shift', value: `${Math.round(cardio.orthostaticIndex)}/100`, threshold: '>= 82', status: cardio.orthostaticIndex < 74 ? 'CRITICAL' : 'WARNING' },
+        { label: 'Cabin CO₂', value: `${Math.round(immuneRad.cabinCo2Ppm)} ppm`, threshold: '< 1,800 ppm', status: immuneRad.cabinCo2Ppm > 1800 ? 'WARNING' : 'NOMINAL' },
+        { label: 'Bone Load', value: `${bone.skeletalLoadScore}/100`, threshold: '>= 75', status: bone.skeletalLoadScore < 75 ? 'WARNING' : 'NOMINAL' },
+      ],
+      domains: ['Heart', 'Cabin Air'],
+    });
+
+    countermeasures.push(
+      {
+        id: 'CM-LBNP-FLUID',
+        insightId: 'SANS_FLUID_SHIFT',
+        label: 'Run 20-min LBNP lower-body fluid shift session',
+        riskReduction: 12,
+        eta: '20 min',
+      },
+      {
+        id: 'CM-SANS-AMSLER',
+        insightId: 'SANS_FLUID_SHIFT',
+        label: 'Complete Amsler grid & near-visual acuity check',
+        riskReduction: 6,
+        eta: '5 min',
+      }
+    );
+  }
+
+  // 4c. Behavioral & Isolation Drift
+  if (cognitive.moodScore <= 6.0 && (cognitive.sleepHours < 6.4 || pvtSlowingMs > 25)) {
+    insights.push({
+      id: 'BEHAVIORAL_ISOLATION_DRIFT',
+      severity: cognitive.moodScore <= 4.5 ? 'CRITICAL' : 'WARNING',
+      confidence: 85,
+      hrpRisk: HRP_RISKS.BEHAVIORAL_CHANGES,
+      title: 'Behavioral & Isolation Fatigue Drift',
+      differentialNote:
+        'Sustained mood drop paired with sleep/reaction strain indicates isolation and workload fatigue.',
+      clinicalSummary: `Mood score ${cognitive.moodScore.toFixed(1)}/10 with ${cognitive.sleepHours.toFixed(1)}h sleep.`,
+      signals: [
+        { label: 'Mood Score', value: `${cognitive.moodScore.toFixed(1)}/10`, threshold: '> 6.0', status: cognitive.moodScore <= 4.5 ? 'CRITICAL' : 'WARNING' },
+        { label: 'Sleep', value: `${cognitive.sleepHours.toFixed(1)} h`, threshold: '>= 6.4 h', status: cognitive.sleepHours < 6.4 ? 'WARNING' : 'NOMINAL' },
+        { label: 'Reaction', value: `${Math.round(cognitive.pvtMeanMs)} ms`, threshold: `< ${BASE.pvtMeanMs + 25} ms`, status: pvtSlowingMs > 25 ? 'WARNING' : 'NOMINAL' },
+      ],
+      domains: ['Focus', 'Sleep'],
+    });
+
+    countermeasures.push({
+      id: 'CM-CREW-DEBRIEF',
+      insightId: 'BEHAVIORAL_ISOLATION_DRIFT',
+      label: 'Schedule 15-min crew peer check-in & light duty',
+      riskReduction: 9,
+      eta: 'Today',
+    });
+  }
+
   // 5. Fallback Nominal Baseline Insight
   if (insights.length === 0) {
     insights.push({
       id: 'NOMINAL_ALL_DOMAINS',
       severity: 'NOMINAL',
       confidence: 97,
+      hrpRisk: HRP_NOMINAL_REFERENCE,
       title: 'All Vitals Nominal',
       differentialNote:
         'Heart rate, cabin atmosphere, radiation, and reaction speed are all within Mars transit baseline.',
@@ -468,8 +548,14 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
     immuneRad.cabinCo2Ppm > T.co2CriticalPpm - 500 ||
     pvtSlowingMs > T.pvtSlowingWarningMs ||
     cardio.restingHr > T.hrWarningBpm + 10 ||
+    cardio.orthostaticIndex < 75 ||
     currentEffectiveScore < 68;
-  const evaCaution = !evaHold && (currentEffectiveScore < 82 || cardio.aredCompletionPct < 70 || cognitive.circadianAlignmentPct < 78);
+  const evaCaution =
+    !evaHold &&
+    (currentEffectiveScore < 82 ||
+      cardio.aredCompletionPct < 70 ||
+      cardio.orthostaticIndex < 82 ||
+      cognitive.circadianAlignmentPct < 78);
 
   const roboticsHold = pvtSlowingMs > T.pvtSlowingWarningMs || immuneRad.cabinCo2Ppm > T.co2CriticalPpm || currentEffectiveScore < 62;
   const roboticsCaution = !roboticsHold && (pvtSlowingMs > Math.round(T.pvtSlowingWarningMs * 0.65) || cognitive.circadianAlignmentPct < 75 || currentEffectiveScore < 80);
@@ -501,9 +587,19 @@ export function evaluateEdgeTelemetry(state, crewBaselines = null, crossCrewCont
         : `1/${totalCrew} crew affected — individual profile`;
   }
 
+  const activeHrpRisks = [];
+  const seenHrpIds = new Set();
+  for (const ins of insights) {
+    if (ins.hrpRisk && ins.severity !== 'NOMINAL' && !seenHrpIds.has(ins.hrpRisk.id)) {
+      seenHrpIds.add(ins.hrpRisk.id);
+      activeHrpRisks.push(ins.hrpRisk);
+    }
+  }
+
   return {
     overallStatus,
     activeScenario,
+    activeHrpRisks,
     baseResilienceScore,
     currentEffectiveScore,
     projectedScore,

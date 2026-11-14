@@ -108,6 +108,14 @@ export const SCENARIO_DEFINITIONS = [
     severity: 'WARNING',
     description: 'Simulates 72-hour sleep phase drift and resistive workout deficit for active crew member.',
   },
+  {
+    id: 'SANS_FLUID_SHIFT',
+    label: 'SANS Fluid Shift & Isolation Drift',
+    shortLabel: 'SANS + Isolation Drift',
+    code: 'SCN-04',
+    severity: 'WARNING',
+    description: 'Simulates headward fluid shift, mild CO₂ rise, and isolation mood/sleep drift (NASA HRP SANS & Behavioral).',
+  },
 ];
 
 export function build14DayHistoryForCrew(crew) {
