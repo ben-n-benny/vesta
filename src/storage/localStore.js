@@ -80,27 +80,13 @@ export async function loadMissionState() {
     // Fallback below
   }
 
-  // 3. Optionally check local air-gapped Node server if running
-  try {
-    const res = await fetch('/api/state', { cache: 'no-store' });
-    if (res.ok) {
-      const serverData = await res.json();
-      if (serverData && serverData.telemetry) {
-        await saveMissionState(serverData, false);
-        return { state: serverData, source: 'LocalEdgeServer' };
-      }
-    }
-  } catch {
-    // Offline/standalone Vite mode — expected when server isn't launched
-  }
-
-  // 4. Seed fresh mission state
+  // 3. Seed fresh mission state
   const seeded = createSeedState();
-  await saveMissionState(seeded, false);
+  await saveMissionState(seeded);
   return { state: seeded, source: 'FreshSeed' };
 }
 
-export async function saveMissionState(state, syncServer = true) {
+export async function saveMissionState(state) {
   const stamped = { ...state, updatedAt: new Date().toISOString() };
   try {
     await idbSet(STATE_KEY, stamped);
@@ -111,17 +97,6 @@ export async function saveMissionState(state, syncServer = true) {
     window.localStorage.setItem(LS_FALLBACK_KEY, JSON.stringify(stamped));
   } catch {
     // ignore quota errors
-  }
-  if (syncServer) {
-    try {
-      await fetch('/api/state', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(stamped),
-      });
-    } catch {
-      // Safe no-op when running air-gapped in browser-only mode
-    }
   }
   return stamped;
 }
@@ -137,73 +112,29 @@ export async function resetMissionState() {
   } catch {
     // ignore
   }
-  try {
-    await fetch('/api/reset', { method: 'POST' });
-  } catch {
-    // ignore
-  }
   const seeded = createSeedState();
-  await saveMissionState(seeded, true);
+  await saveMissionState(seeded);
   return seeded;
 }
 
 export async function fetchBackendHealth() {
-  try {
-    const res = await fetch('/api/health', { cache: 'no-store' });
-    if (!res.ok) return { online: false };
-    const data = await res.json();
-    return { online: true, ...data };
-  } catch {
-    return { online: false };
-  }
+  return { online: false };
 }
 
 export async function fetchAdminOverview() {
-  try {
-    const res = await fetch('/api/admin/overview', { cache: 'no-store' });
-    if (!res.ok) return { online: false };
-    return await res.json();
-  } catch {
-    return { online: false };
-  }
+  return { online: false };
 }
 
-export async function saveThresholdsApi(thresholds) {
-  try {
-    const res = await fetch('/api/admin/thresholds', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(thresholds),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+export async function saveThresholdsApi() {
+  return null;
 }
 
 export async function flushDtnQueueApi() {
-  try {
-    const res = await fetch('/api/admin/dtn/sync', { method: 'POST' });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+  return null;
 }
 
-export async function appendAuditApi(action, detail, actor = 'CMO / Admin') {
-  try {
-    const res = await fetch('/api/admin/audit', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, detail, actor }),
-    });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+export async function appendAuditApi() {
+  return null;
 }
 
 export function downloadTextFile(filename, content, mimeType) {
