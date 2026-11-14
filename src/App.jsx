@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import TelemetryHeader from './components/TelemetryHeader.jsx';
 import ExplainableTriagePanel from './components/ExplainableTriagePanel.jsx';
+import HumanBodyModel from './components/HumanBodyModel.jsx';
 import RiskDomainCards from './components/RiskDomainCards.jsx';
 import ScenarioSimulator from './components/ScenarioSimulator.jsx';
 import AstronautLogModal from './components/AstronautLogModal.jsx';
@@ -809,6 +810,14 @@ export default function App() {
           triage={activeTriage}
           checkedCountermeasures={missionState.checkedCountermeasures}
           onToggleCountermeasure={handleToggleCountermeasure}
+        />
+
+        <HumanBodyModel
+          telemetry={missionState.telemetry}
+          domainStatuses={activeTriage.domainStatuses}
+          deltas={activeTriage.deltas}
+          crew={activeCrew}
+          overallStatus={activeTriage.overallStatus}
         />
 
         <RiskDomainCards
